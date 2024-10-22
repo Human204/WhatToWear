@@ -9,7 +9,7 @@ const fetchWeather = async (latitude: number, longitude: number) => {
 };
 
 const fetchCity = async (city: any) => {
-    const response = await fetch("http://localhost:5000/api/city?city=${city}");
+    const response = await fetch(`http://localhost:5000/api/city?city=${city}`);
     const data = await response.json();
     return data;
 };
@@ -26,15 +26,17 @@ const fetchChatGPTResponse = async (weatherData: any, userPreferences: any) => {
     return data;
 };
 
+
 const App: React.FC = () => {
+    const [city, setCity] = useState<string>('');
     const [latitude, setLatitude] = useState<number>(0);
     const [longitude, setLongitude] = useState<number>(0);
     const [preferences, setPreferences] = useState<{
         favoriteTemperature: string;
-        activity: string;
+        style: string;
     }>({
         favoriteTemperature: "",
-        activity: "",
+        style: "",
     });
     const [response, setResponse] = useState<string>("");
 
@@ -46,22 +48,49 @@ const App: React.FC = () => {
     };
 
     const handleWeatherData = async () => {
+        if (latitude === 0 || longitude === 0) {
+          setResponse("Please enter valid city.");
+          return;
+      }
         try {
             const weatherData = await fetchWeather(latitude, longitude);
+            console.log(weatherData);
+            const weatherDataString = `"${JSON.stringify(weatherData)}"`;
+            console.log(weatherDataString);
             const chatGPTResponse = await fetchChatGPTResponse(
                 weatherData,
                 preferences
             );
+            
             setResponse(chatGPTResponse);
         } catch (error) {
             console.error("Error fetching data:", error);
         }
     };
 
+    const handleCitySubmit = async () => {
+      try {
+        const cityData = await fetchCity(city);
+        setLatitude(cityData.latitude);
+        setLongitude(cityData.longitude);
+      } catch (error) {
+        console.error("Error fetching city data:", error);
+      }
+    };
+
+
     return (
         <div>
             <h1>WhatToWear</h1>
-            <input
+            <input 
+                type="text" 
+                placeholder="City" 
+                onChange={(e) => setCity(e.target.value)} />
+              
+            <button onClick={handleCitySubmit}>
+              Get Coordinates
+            </button>
+            {/* <input
                 type="number"
                 placeholder="Latitude"
                 onChange={(e) => setLatitude(parseFloat(e.target.value))}
@@ -70,7 +99,7 @@ const App: React.FC = () => {
                 type="number"
                 placeholder="Longitude"
                 onChange={(e) => setLongitude(parseFloat(e.target.value))}
-            />
+            /> */}
             <input
                 type="text"
                 name="favoriteTemperature"
@@ -79,8 +108,8 @@ const App: React.FC = () => {
             />
             <input
                 type="text"
-                name="activity"
-                placeholder="Preferred Activity"
+                name="style"
+                placeholder="Preferred style"
                 onChange={handleChange}
             />
             <button onClick={handleWeatherData}>
