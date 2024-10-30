@@ -1,106 +1,122 @@
-import React, { useState } from "react";
-
-const fetchWeather = async (latitude: number, longitude: number) => {
-    const response = await fetch(
-        `http://localhost:5000/api/weather?latitude=${latitude}&longitude=${longitude}`
-    );
-    const data = await response.json();
-    return data;
-};
-
-const fetchCity = async (city: any) => {
-    const response = await fetch(`http://localhost:5000/api/city?city=${city}`);
-    const data = await response.json();
-    return data;
-};
-
-const fetchChatGPTResponse = async (weatherData: any, userPreferences: any) => {
-    const response = await fetch("http://localhost:5000/api/chatgpt", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ weatherData, userPreferences }),
-    });
-    const data = await response.json();
-    return data;
-};
+import React, { useMemo, useState } from "react";
+import {
+    Preferences,
+    useRecommendation,
+} from "../../features/recommendations/api/useRecommendation";
+import { InputText } from "primereact/inputtext";
+import { Button } from "primereact/button";
+import { useWeather } from "../../features/recommendations/api/useWeather";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import dayjs from "dayjs";
+import { Skeleton } from "primereact/skeleton";
 
 export default function Today() {
     const [city, setCity] = useState<string>("");
-    const [latitude, setLatitude] = useState<number>(0);
-    const [longitude, setLongitude] = useState<number>(0);
-    const [preferences, setPreferences] = useState<{
-        favoriteTemperature: string;
-        style: string;
-    }>({
+    const [preferences, setPreferences] = useState<Preferences>({
         favoriteTemperature: "",
         style: "",
     });
-    const [response, setResponse] = useState<string>("");
+    const {
+        data: weatherData,
+        isFetching: isWeatherLoading,
+        refetch,
+    } = useWeather(city);
+    const transformedWeatherData = useMemo(() => {
+        if (!weatherData) return [];
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const unit = weatherData.hourly_units.temperature_2m;
+        const time = [...weatherData.hourly.time];
+        const temperature = weatherData.hourly.temperature_2m.map(
+            (temp) => `${temp} ${unit}`
+        );
+        const joined = temperature.map((temp, idx) => ({
+            temperature: temp,
+            time: time[idx],
+        }));
+
+        return joined;
+    }, [weatherData]);
+    const { data: response, isFetching: isResponseLoading } = useRecommendation(
+        weatherData,
+        preferences
+    );
+
+    function handlePreferenceChange(e: React.ChangeEvent<HTMLInputElement>) {
         setPreferences({
             ...preferences,
             [e.target.name]: e.target.value,
         });
-    };
+    }
 
-    const handleWeatherData = async () => {
-        if (latitude === 0 || longitude === 0) {
-            setResponse("Please enter valid city.");
-            return;
-        }
-        try {
-            const weatherData = await fetchWeather(latitude, longitude);
-            console.log(weatherData);
-            const weatherDataString = `"${JSON.stringify(weatherData)}"`;
-            console.log(weatherDataString);
-            const chatGPTResponse = await fetchChatGPTResponse(
-                weatherData,
-                preferences
-            );
-
-            setResponse(chatGPTResponse);
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        }
-    };
-
-    const handleCitySubmit = async () => {
-        try {
-            const cityData = await fetchCity(city);
-            setLatitude(cityData.latitude);
-            setLongitude(cityData.longitude);
-        } catch (error) {
-            console.error("Error fetching city data:", error);
-        }
-    };
+    function handleGetRecommendation() {
+        refetch();
+    }
 
     return (
-        <div>
-            <input
-                type="text"
-                placeholder="City"
-                onChange={(e) => setCity(e.target.value)}
-            />
-            <button onClick={handleCitySubmit}>Get Coordinates</button>
-            <input
-                type="text"
-                name="favoriteTemperature"
-                placeholder="Preferred Temperature"
-                onChange={handleChange}
-            />
-            <input
-                type="text"
-                name="style"
-                placeholder="Preferred style"
-                onChange={handleChange}
-            />
-            <button onClick={handleWeatherData}>
-                Get Weather Recommendation
-            </button>
-            {response && <p>{response}</p>}
+        <div className="flex flex-col gap-2 h-full px-11 py-6 overflow-y-auto">
+            <div className="flex flex-col gap-2">
+                <div className="grid grid-cols-3 gap-4">
+                    <InputText
+                        type="text"
+                        placeholder="City"
+                        onChange={(e) => setCity(e.target.value)}
+                    />
+                    <InputText
+                        type="text"
+                        name="favoriteTemperature"
+                        placeholder="Preferred Temperature"
+                        onChange={handlePreferenceChange}
+                    />
+                    <InputText
+                        type="text"
+                        name="style"
+                        placeholder="Preferred style"
+                        onChange={handlePreferenceChange}
+                    />
+                </div>
+                <Button
+                    label="Get Weather Recommendation"
+                    className="mx-auto"
+                    onClick={handleGetRecommendation}
+                    loading={isResponseLoading || isWeatherLoading}
+                />
+            </div>
+            <div className="grid grid-cols-2 gap-4 overflow-y-auto">
+                <DataTable
+                    value={transformedWeatherData ?? []}
+                    className="overflow-y-auto"
+                    loading={isWeatherLoading}
+                >
+                    <Column
+                        field="time"
+                        header="Laikas"
+                        body={({
+                            time,
+                        }: {
+                            temperature: number;
+                            time: string;
+                        }) => dayjs(time).format("YYYY-MM-DD HH:mm:ss")}
+                    ></Column>
+                    <Column field="temperature" header="Temperatūra"></Column>
+                </DataTable>
+                {isResponseLoading ? (
+                    <div>
+                        <Skeleton height="2rem" className="mb-2"></Skeleton>
+                        <Skeleton className="mb-2"></Skeleton>
+                        <Skeleton className="mb-2"></Skeleton>
+                        <Skeleton className="mb-2"></Skeleton>
+                        <Skeleton className="mb-2"></Skeleton>
+                        <Skeleton className="mb-2"></Skeleton>
+                    </div>
+                ) : (
+                    response && (
+                        <p className="w-full max-w-[96ch] mx-auto">
+                            {response}
+                        </p>
+                    )
+                )}
+            </div>
         </div>
     );
 }
