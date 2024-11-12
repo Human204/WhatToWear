@@ -23,7 +23,7 @@ export default function Today() {
         refetch,
     } = useWeather(city);
     const transformedWeatherData = useMemo(() => {
-        if (!weatherData) return [];
+        if (!weatherData) return null;
 
         const unit = weatherData.hourly_units.temperature_2m;
         const time = [...weatherData.hourly.time];
@@ -83,23 +83,30 @@ export default function Today() {
                 />
             </div>
             <div className="grid grid-cols-2 gap-4 overflow-y-auto">
-                <DataTable
-                    value={transformedWeatherData ?? []}
-                    className="overflow-y-auto"
-                    loading={isWeatherLoading}
-                >
-                    <Column
-                        field="time"
-                        header="Laikas"
-                        body={({
-                            time,
-                        }: {
-                            temperature: number;
-                            time: string;
-                        }) => dayjs(time).format("YYYY-MM-DD HH:mm:ss")}
-                    ></Column>
-                    <Column field="temperature" header="Temperatūra"></Column>
-                </DataTable>
+                {transformedWeatherData && (
+                    <DataTable
+                        className="overflow-y-auto"
+                        scrollHeight="flex"
+                        value={transformedWeatherData}
+                        loading={isWeatherLoading}
+                        scrollable
+                    >
+                        <Column
+                            field="time"
+                            header="Laikas"
+                            body={({
+                                time,
+                            }: {
+                                temperature: number;
+                                time: string;
+                            }) => dayjs(time).format("YYYY-MM-DD HH:mm:ss")}
+                        ></Column>
+                        <Column
+                            field="temperature"
+                            header="Temperatūra"
+                        ></Column>
+                    </DataTable>
+                )}
                 {isResponseLoading ? (
                     <div>
                         <Skeleton height="2rem" className="mb-2"></Skeleton>
