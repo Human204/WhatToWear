@@ -63,6 +63,20 @@ export default function Header() {
                         }}
                         text
                     />
+                    <Button
+                        label="Continue with Facebook"
+                        className="text-black"
+                        icon="pi pi-facebook"
+                        onClick={() => {
+                            window.open(
+                                `${
+                                    import.meta.env.VITE_BASE_API_URL
+                                }/auth/facebook`,
+                                "_self"
+                            );
+                        }}
+                        text
+                    />
                 </div>
             </Dialog>
             <Menubar
@@ -95,10 +109,20 @@ export default function Header() {
                             <Button
                                 label="Sign in"
                                 size="small"
-                                onClick={() => setVisible(true)}
+                                onClick={() => {
+                                    setVisible(true);
+                                    setActiveIndex(0);
+                                }}
                                 outlined
                             />
-                            <Button label="Sign up" size="small" />
+                            <Button
+                                label="Sign up"
+                                size="small"
+                                onClick={() => {
+                                    setVisible(true);
+                                    setActiveIndex(1);
+                                }}
+                            />
                         </div>
                     ) : (
                         user.username
