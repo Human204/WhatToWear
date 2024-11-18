@@ -7,6 +7,7 @@ import LoginForm from "../features/auth/components/LoginForm";
 import { TabPanel, TabView } from "primereact/tabview";
 import RegisterForm from "../features/auth/components/RegisterForm";
 import { useAuth } from "../context/AuthProvider";
+import { Divider } from "primereact/divider";
 
 export default function Header() {
     const { user } = useAuth();
@@ -25,7 +26,7 @@ export default function Header() {
     return (
         <>
             <Dialog
-                header="Sign in"
+                header={activeIndex ? "Register" : "Sign in"}
                 className="w-full max-w-[30rem]"
                 onHide={() => {
                     setVisible(false);
@@ -46,6 +47,23 @@ export default function Header() {
                         <RegisterForm successHandler={changeTab} />
                     </TabPanel>
                 </TabView>
+                <Divider className="m-0">or</Divider>
+                <div className="flex flex-col items-center">
+                    <Button
+                        label="Continue with Google"
+                        className="text-black"
+                        icon="pi pi-google"
+                        onClick={() => {
+                            window.open(
+                                `${
+                                    import.meta.env.VITE_BASE_API_URL
+                                }/auth/google`,
+                                "_self"
+                            );
+                        }}
+                        text
+                    />
+                </div>
             </Dialog>
             <Menubar
                 className="px-11 py-3"

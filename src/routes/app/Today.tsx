@@ -6,8 +6,6 @@ import {
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
 import { useWeather } from "../../features/recommendations/api/useWeather";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
 import dayjs from "dayjs";
 import { Skeleton } from "primereact/skeleton";
 
@@ -26,13 +24,15 @@ export default function Today() {
         if (!weatherData) return null;
 
         const unit = weatherData.hourly_units.temperature_2m;
-        const time = [...weatherData.hourly.time];
+        const time = weatherData.hourly.time;
+        const icons = weatherData.hourly.weather_code;
         const temperature = weatherData.hourly.temperature_2m.map(
             (temp) => `${temp} ${unit}`
         );
         const joined = temperature.map((temp, idx) => ({
             temperature: temp,
             time: time[idx],
+            icon: icons[idx],
         }));
 
         return joined;
@@ -82,31 +82,25 @@ export default function Today() {
                     loading={isResponseLoading || isWeatherLoading}
                 />
             </div>
-            <div className="grid grid-cols-2 gap-4 overflow-y-auto">
-                {transformedWeatherData && (
-                    <DataTable
-                        className="overflow-y-auto"
-                        scrollHeight="flex"
-                        value={transformedWeatherData}
-                        loading={isWeatherLoading}
-                        scrollable
-                    >
-                        <Column
-                            field="time"
-                            header="Laikas"
-                            body={({
-                                time,
-                            }: {
-                                temperature: number;
-                                time: string;
-                            }) => dayjs(time).format("YYYY-MM-DD HH:mm:ss")}
-                        ></Column>
-                        <Column
-                            field="temperature"
-                            header="Temperatūra"
-                        ></Column>
-                    </DataTable>
-                )}
+            <div className="grid grid-rows-2 justify-center gap-4 max-w-[96ch] mx-auto">
+                <div className="flex gap-6 overflow-y-auto">
+                    {transformedWeatherData?.map((data) => {
+                        const day = dayjs(data.time).format("MM/DD");
+                        const time = dayjs(data.time).format("HH:mm");
+                        return (
+                            <div className="grid grid-rows-3 text-center text-nowrap">
+                                <p className="text-3xl">{data.icon}</p>
+                                <p className="text-xl font-bold">
+                                    {data.temperature}
+                                </p>
+                                <div>
+                                    <p>{day}</p>
+                                    <p>{time}</p>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
                 {isResponseLoading ? (
                     <div>
                         <Skeleton height="2rem" className="mb-2"></Skeleton>
@@ -118,9 +112,7 @@ export default function Today() {
                     </div>
                 ) : (
                     response && (
-                        <p className="w-full max-w-[96ch] mx-auto">
-                            {response}
-                        </p>
+                        <p className="break-all">{JSON.stringify(response)}</p>
                     )
                 )}
             </div>
