@@ -14,7 +14,6 @@ export default function Header() {
     const navigate = useNavigate();
     const [visible, setVisible] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
-
     const hideHandler = useCallback(() => {
         setVisible(false);
     }, []);

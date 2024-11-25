@@ -4,6 +4,7 @@ import Today from "./app/Today";
 import Planner from "./app/Planner";
 import Error from "./app/Error";
 import { AuthProvider } from "../context/AuthProvider";
+import { SearchProvider } from "../features/recommendations/context/SearchContext";
 
 export default createBrowserRouter([
     {
@@ -17,7 +18,11 @@ export default createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <Today />,
+                element: (
+                    <SearchProvider>
+                        <Today />
+                    </SearchProvider>
+                ),
             },
             {
                 path: "/planner",

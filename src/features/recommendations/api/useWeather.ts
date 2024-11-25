@@ -69,15 +69,48 @@ async function getWeather({ latitude, longitude }: Coordinates) {
         import.meta.env.VITE_BASE_API_URL +
             `/api/weather?latitude=${latitude}&longitude=${longitude}`
     );
+    const data = (await response.json()) as WeatherData;
 
-    return (await response.json()) as WeatherData;
+    return {
+        data,
+        latitude,
+        longitude,
+    };
 }
 
 export function useWeather(city: string | undefined) {
     return useQuery({
         queryKey: ["weather", city],
         queryFn: async () => await getWeather(await getCoordinates(city!)),
-        select(data): WeatherData {
+        select({ data }): WeatherData {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 2);
+            const tomorrowMidnight = new Date(
+                tomorrow.getFullYear(),
+                tomorrow.getMonth(),
+                tomorrow.getDate()
+            );
+            const timestampNow = new Date().getTime();
+            const nowIndex = data.hourly.time.findIndex(
+                (time) => new Date(time).getTime() >= timestampNow
+            );
+            const tomorrowMidnightTimestamp = tomorrowMidnight.getTime();
+            const tomorrowMidnightIndex = data.hourly.time.findIndex(
+                (time) => new Date(time).getTime() >= tomorrowMidnightTimestamp
+            );
+            data.hourly.time = data.hourly.time.slice(
+                nowIndex,
+                tomorrowMidnightIndex
+            );
+            data.hourly.temperature_2m = data.hourly.temperature_2m.slice(
+                nowIndex,
+                tomorrowMidnightIndex
+            );
+            data.hourly.weather_code = data.hourly.weather_code.slice(
+                nowIndex,
+                tomorrowMidnightIndex
+            );
+
             return {
                 ...data,
                 hourly: {
@@ -89,7 +122,7 @@ export function useWeather(city: string | undefined) {
                 },
             };
         },
-        enabled: false,
+        enabled: city != null,
         placeholderData: keepPreviousData,
         staleTime: Infinity,
         gcTime: Infinity,

@@ -24,12 +24,25 @@ async function getRecommendation(
         }
     );
 
-    return (await response.json()) as string;
+    return (await response.json()) as {
+        clothingRecommendation: {
+            summary: string;
+            clothes: {
+                hat: string;
+                top: string;
+                bottom: string;
+                shoes: string;
+            };
+            items: [];
+            explanation: string;
+        };
+        imageUrl: string;
+    };
 }
 
 export function useRecommendation(
     weatherData: WeatherData | undefined,
-    userPreferences: Preferences
+    userPreferences: Preferences | undefined
 ) {
     return useQuery({
         queryKey: [
@@ -37,8 +50,8 @@ export function useRecommendation(
             weatherData?.latitude,
             weatherData?.longitude,
         ],
-        queryFn: () => getRecommendation(weatherData!, userPreferences),
-        enabled: weatherData != null,
+        queryFn: () => getRecommendation(weatherData!, userPreferences!),
+        enabled: weatherData != null && userPreferences != null,
         staleTime: Infinity,
         gcTime: Infinity,
         retry: 1,
