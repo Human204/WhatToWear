@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { WeatherData } from "./useWeather";
 
 export type Preferences = {
+    city: string;
     favoriteTemperature: string;
     style: string;
 };
@@ -42,7 +43,7 @@ async function getRecommendation(
 
 export function useRecommendation(
     weatherData: WeatherData | undefined,
-    userPreferences: Preferences | undefined
+    userPreferences: Preferences | null | undefined
 ) {
     return useQuery({
         queryKey: [

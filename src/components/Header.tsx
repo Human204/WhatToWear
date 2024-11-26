@@ -1,29 +1,46 @@
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Menubar } from "primereact/menubar";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import LoginForm from "../features/auth/components/LoginForm";
 import { TabPanel, TabView } from "primereact/tabview";
 import RegisterForm from "../features/auth/components/RegisterForm";
 import { useAuth } from "../context/AuthProvider";
 import { Divider } from "primereact/divider";
+import { Avatar } from "primereact/avatar";
+import { Menu } from "primereact/menu";
+import { MenuItem } from "primereact/menuitem";
 
 export default function Header() {
     const { user } = useAuth();
+    const menuRef = useRef<Menu>(null);
     const navigate = useNavigate();
     const [visible, setVisible] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
     const hideHandler = useCallback(() => {
         setVisible(false);
     }, []);
-
     const changeTab = useCallback((index: number) => {
         setActiveIndex(index);
     }, []);
+    const model: MenuItem[] = [
+        {
+            label: "Profile",
+            icon: "pi pi-user",
+            command() {
+                navigate("/profile");
+            },
+        },
+    ];
+
+    function toggleMenu(event: any) {
+        menuRef.current?.toggle(event);
+    }
 
     return (
         <>
+            <Menu model={model} ref={menuRef} popup />
             <Dialog
                 header={activeIndex ? "Register" : "Sign in"}
                 className="w-full max-w-[30rem]"
@@ -124,7 +141,17 @@ export default function Header() {
                             />
                         </div>
                     ) : (
-                        user.username
+                        <Button
+                            className="p-0"
+                            severity="secondary"
+                            onClick={toggleMenu}
+                            text
+                        >
+                            <Avatar
+                                className="text-black"
+                                label={user.username.slice(0, 1)}
+                            />
+                        </Button>
                     )
                 }
             />

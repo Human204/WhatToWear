@@ -78,7 +78,7 @@ async function getWeather({ latitude, longitude }: Coordinates) {
     };
 }
 
-export function useWeather(city: string | undefined) {
+export function useWeather(city: string | undefined, enabled = true) {
     return useQuery({
         queryKey: ["weather", city],
         queryFn: async () => await getWeather(await getCoordinates(city!)),
@@ -122,7 +122,7 @@ export function useWeather(city: string | undefined) {
                 },
             };
         },
-        enabled: city != null,
+        enabled: city != null && enabled,
         placeholderData: keepPreviousData,
         staleTime: Infinity,
         gcTime: Infinity,

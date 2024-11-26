@@ -5,6 +5,9 @@ import Planner from "./app/Planner";
 import Error from "./app/Error";
 import { AuthProvider } from "../context/AuthProvider";
 import { SearchProvider } from "../features/recommendations/context/SearchContext";
+import Protected from "../components/Protected";
+import Profile from "./app/Profile";
+import History from "./app/History";
 
 export default createBrowserRouter([
     {
@@ -27,6 +30,22 @@ export default createBrowserRouter([
             {
                 path: "/planner",
                 element: <Planner />,
+            },
+            {
+                path: "/profile",
+                element: (
+                    <Protected>
+                        <Profile />
+                    </Protected>
+                ),
+            },
+            {
+                path: "/history/:historyId",
+                element: (
+                    <Protected>
+                        <History />
+                    </Protected>
+                ),
             },
         ],
     },

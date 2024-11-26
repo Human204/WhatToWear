@@ -1,33 +1,35 @@
-import { useMemo, useState } from "react";
-import { useWeather } from "../api/useWeather";
-import { useSearch } from "../context/SearchContext";
-import { useRecommendation } from "../api/useRecommendation";
+import { useParams } from "react-router-dom";
+import { useHistory } from "../../features/recommendations/api/useHistory";
+import { useMemo } from "react";
 import dayjs from "dayjs";
-import { Skeleton } from "primereact/skeleton";
-import "leaflet/dist/leaflet.css";
-import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
+import { MapContainer } from "react-leaflet/MapContainer";
+import { ChangeView } from "../../features/recommendations/components/Response";
+import { TileLayer } from "react-leaflet/TileLayer";
+import { Marker } from "react-leaflet/Marker";
 import { Button } from "primereact/button";
-import { useSaveHistory } from "../api/useHistory";
+import { useRecommendation } from "../../features/recommendations/api/useRecommendation";
+import { useWeather } from "../../features/recommendations/api/useWeather";
+import { Skeleton } from "primereact/skeleton";
 
-export function ChangeView({
-    center,
-    zoom,
-}: {
-    center: [number, number];
-    zoom: number;
-}) {
-    const map = useMap();
-    map.setView(center, zoom);
-    return null;
-}
+export default function History() {
+    const { historyId } = useParams();
+    const { data: history } = useHistory();
+    const historyItem = history?.find((item) => item.id === +(historyId ?? ""));
+    const { data: weatherData, refetch } = useWeather(
+        historyItem?.prompt.userPreferences.city,
+        false
+    );
+    const { data: recommedation, isFetching } = useRecommendation(
+        weatherData,
+        historyItem?.prompt.userPreferences
+    );
 
-export default function Response() {
-    const { search } = useSearch();
-    const [saved, setSaved] = useState(false);
-    const { data: weatherData } = useWeather(search?.city);
+    const wData = weatherData || historyItem?.prompt.weatherData;
+    const response = recommedation || historyItem?.response;
     const transformedWeatherData = useMemo(() => {
-        if (!weatherData) return null;
+        if (!wData) return null;
 
+        const weatherData = wData;
         const unit = weatherData.hourly_units.temperature_2m;
         const time = weatherData.hourly.time;
         const icons = weatherData.hourly.weather_code;
@@ -41,28 +43,10 @@ export default function Response() {
         }));
 
         return joined;
-    }, [weatherData]);
-    const { data: response, isFetching: isResponseLoading } = useRecommendation(
-        weatherData,
-        search
-    );
-    const { mutate: saveHistory } = useSaveHistory();
+    }, [wData]);
 
-    function handleSave() {
-        saveHistory(
-            {
-                prompt: {
-                    weatherData,
-                    userPreferences: search,
-                },
-                response,
-            },
-            {
-                onSuccess() {
-                    setSaved(true);
-                },
-            }
-        );
+    function handleRegenerate() {
+        refetch();
     }
 
     return (
@@ -98,18 +82,12 @@ export default function Response() {
                 </div>
                 <MapContainer
                     className="w-full"
-                    center={[
-                        weatherData?.latitude ?? 0,
-                        weatherData?.longitude ?? 0,
-                    ]}
+                    center={[wData?.latitude ?? 0, wData?.longitude ?? 0]}
                     zoom={13}
                     scrollWheelZoom={true}
                 >
                     <ChangeView
-                        center={[
-                            weatherData?.latitude ?? 0,
-                            weatherData?.longitude ?? 0,
-                        ]}
+                        center={[wData?.latitude ?? 0, wData?.longitude ?? 0]}
                         zoom={13}
                     />
                     <TileLayer
@@ -117,14 +95,11 @@ export default function Response() {
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
                     <Marker
-                        position={[
-                            weatherData?.latitude ?? 0,
-                            weatherData?.longitude ?? 0,
-                        ]}
+                        position={[wData?.latitude ?? 0, wData?.longitude ?? 0]}
                     ></Marker>
                 </MapContainer>
             </div>
-            {isResponseLoading ? (
+            {isFetching ? (
                 <div>
                     <Skeleton height="2rem" className="mb-2"></Skeleton>
                     <Skeleton className="mb-2"></Skeleton>
@@ -137,11 +112,10 @@ export default function Response() {
                 <div className="flex flex-col gap-4">
                     <div className="relative">
                         <Button
-                            className="absolute top-0 right-0 z-10"
-                            icon={`pi ${saved ? "pi-heart-fiil" : "pi-heart"}`}
-                            severity="danger"
-                            onClick={handleSave}
-                            disabled={saved}
+                            className="absolute top-0 right-0"
+                            icon="pi pi-sync"
+                            severity="contrast"
+                            onClick={handleRegenerate}
                             text
                         />
                         <img
