@@ -3,15 +3,18 @@ import { useMe, type User } from "../features/auth/api/useAuth";
 
 type AuthContextType = {
     user?: User;
+    isLoading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const { data: user } = useMe();
+    const { data: user, isLoading } = useMe();
 
     return (
-        <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
+        <AuthContext.Provider value={{ user, isLoading }}>
+            {children}
+        </AuthContext.Provider>
     );
 }
 

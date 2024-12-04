@@ -7,46 +7,58 @@ import { ChangeView } from "../../features/recommendations/components/Response";
 import { TileLayer } from "react-leaflet/TileLayer";
 import { Marker } from "react-leaflet/Marker";
 import { Button } from "primereact/button";
-import { useRecommendation } from "../../features/recommendations/api/useRecommendation";
-import { useWeather } from "../../features/recommendations/api/useWeather";
+import { useRegenerate } from "../../features/recommendations/api/useRecommendation";
 import { Skeleton } from "primereact/skeleton";
+import { classNames } from "primereact/utils";
+import {
+    getWeatherRange,
+    weatherIcons,
+} from "../../features/recommendations/api/useWeather";
 
 export default function History() {
     const { historyId } = useParams();
-    const { data: history } = useHistory();
+    const { data: history, isFetching } = useHistory();
     const historyItem = history?.find((item) => item.id === +(historyId ?? ""));
-    const { data: weatherData, refetch } = useWeather(
-        historyItem?.prompt.userPreferences.city,
-        false
-    );
-    const { data: recommedation, isFetching } = useRecommendation(
-        weatherData,
-        historyItem?.prompt.userPreferences
-    );
-
-    const wData = weatherData || historyItem?.prompt.weatherData;
-    const response = recommedation || historyItem?.response;
+    const weatherData = historyItem?.prompt.weatherData;
+    const response = historyItem?.response;
+    const clothingRecommendation =
+        response && "clothingRecommendation" in response
+            ? response.clothingRecommendation
+            : response;
+    const { mutate: regenerate, isPending } = useRegenerate();
     const transformedWeatherData = useMemo(() => {
-        if (!wData) return null;
+        if (!historyItem) return null;
 
-        const weatherData = wData;
-        const unit = weatherData.hourly_units.temperature_2m;
-        const time = weatherData.hourly.time;
-        const icons = weatherData.hourly.weather_code;
-        const temperature = weatherData.hourly.temperature_2m.map(
-            (temp) => `${temp} ${unit}`
+        const weatherData = historyItem?.prompt.weatherData;
+        const { nowIndex, tomorrowMidnightIndex } =
+            getWeatherRange(weatherData);
+        const unit = weatherData.hourly_units.temperature_2m.slice(
+            nowIndex,
+            tomorrowMidnightIndex
         );
+        const time = weatherData.hourly.time.slice(
+            nowIndex,
+            tomorrowMidnightIndex
+        );
+        const icons = weatherData.hourly.weather_code.slice(
+            nowIndex,
+            tomorrowMidnightIndex
+        );
+        console.log(icons);
+        const temperature = weatherData.hourly.temperature_2m
+            .slice(nowIndex, tomorrowMidnightIndex)
+            .map((temp) => `${temp} ${unit}`);
         const joined = temperature.map((temp, idx) => ({
             temperature: temp,
             time: time[idx],
-            icon: icons[idx],
+            icon: weatherIcons[icons[idx] as keyof typeof weatherIcons],
         }));
 
         return joined;
-    }, [wData]);
+    }, [historyItem]);
 
     function handleRegenerate() {
-        refetch();
+        regenerate(+historyId!);
     }
 
     return (
@@ -82,12 +94,18 @@ export default function History() {
                 </div>
                 <MapContainer
                     className="w-full"
-                    center={[wData?.latitude ?? 0, wData?.longitude ?? 0]}
+                    center={[
+                        weatherData?.latitude ?? 0,
+                        weatherData?.longitude ?? 0,
+                    ]}
                     zoom={13}
                     scrollWheelZoom={true}
                 >
                     <ChangeView
-                        center={[wData?.latitude ?? 0, wData?.longitude ?? 0]}
+                        center={[
+                            weatherData?.latitude ?? 0,
+                            weatherData?.longitude ?? 0,
+                        ]}
                         zoom={13}
                     />
                     <TileLayer
@@ -95,7 +113,10 @@ export default function History() {
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
                     <Marker
-                        position={[wData?.latitude ?? 0, wData?.longitude ?? 0]}
+                        position={[
+                            weatherData?.latitude ?? 0,
+                            weatherData?.longitude ?? 0,
+                        ]}
                     ></Marker>
                 </MapContainer>
             </div>
@@ -113,27 +134,31 @@ export default function History() {
                     <div className="relative">
                         <Button
                             className="absolute top-0 right-0"
-                            icon="pi pi-sync"
+                            icon={classNames("pi pi-sync", {
+                                spin: isPending,
+                            })}
                             severity="contrast"
                             onClick={handleRegenerate}
                             text
                         />
                         <img
                             className="w-full h-auto max-h-96 object-scale-down"
-                            src={response?.imageUrl}
+                            src={
+                                response && "imageUrl" in response
+                                    ? response.imageUrl
+                                    : ""
+                            }
                         />
                     </div>
                     <p className="break-all">
-                        {response?.clothingRecommendation.summary}
+                        {clothingRecommendation?.summary}
                     </p>
                     <p>
-                        Recommended clothing:{" "}
-                        {Object.keys(
-                            response?.clothingRecommendation?.clothes ?? {}
-                        )
+                        historyItem?.recommended clothing:{" "}
+                        {Object.keys(clothingRecommendation?.clothes ?? {})
                             .map((key) => {
                                 const value =
-                                    response?.clothingRecommendation.clothes[
+                                    clothingRecommendation?.clothes[
                                         key as
                                             | "hat"
                                             | "top"

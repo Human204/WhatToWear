@@ -2,6 +2,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { WeatherData } from "./useWeather";
 import { Preferences } from "./useRecommendation";
 
+export type ClothingRecommendation = {
+    summary: string;
+    clothes: {
+        hat: string;
+        top: string;
+        bottom: string;
+        shoes: string;
+    };
+    items: [];
+    explanation: string;
+};
+
 async function saveHistory(data: { prompt: any; response: any }) {
     await fetch(import.meta.env.VITE_BASE_API_URL + "/api/save-history", {
         method: "POST",
@@ -60,20 +72,12 @@ export function useHistory() {
                         weatherData: WeatherData;
                         userPreferences: Preferences;
                     },
-                    response: JSON.parse(d.response) as {
-                        clothingRecommendation: {
-                            summary: string;
-                            clothes: {
-                                hat: string;
-                                top: string;
-                                bottom: string;
-                                shoes: string;
-                            };
-                            items: [];
-                            explanation: string;
-                        };
-                        imageUrl: string;
-                    },
+                    response: JSON.parse(d.response) as
+                        | {
+                              clothingRecommendation: ClothingRecommendation;
+                              imageUrl: string;
+                          }
+                        | ClothingRecommendation,
                 };
             });
         },

@@ -1,11 +1,29 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { WeatherData } from "./useWeather";
+import { ClothingRecommendation } from "./useHistory";
 
 export type Preferences = {
     city: string;
     favoriteTemperature: string;
     style: string;
 };
+
+async function regenerate(id: number) {
+    const response = await fetch(
+        import.meta.env.VITE_BASE_API_URL + "/api/chatgpt/regenerate",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+            mode: "cors",
+            body: JSON.stringify({ id }),
+        }
+    );
+
+    return (await response.text()) as string;
+}
 
 async function getRecommendation(
     weatherData: WeatherData,
@@ -26,19 +44,21 @@ async function getRecommendation(
     );
 
     return (await response.json()) as {
-        clothingRecommendation: {
-            summary: string;
-            clothes: {
-                hat: string;
-                top: string;
-                bottom: string;
-                shoes: string;
-            };
-            items: [];
-            explanation: string;
-        };
+        clothingRecommendation: ClothingRecommendation;
         imageUrl: string;
     };
+}
+
+export function useRegenerate() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: regenerate,
+        async onSuccess() {
+            console.log("Success");
+            await queryClient.invalidateQueries({ queryKey: ["history"] });
+        },
+    });
 }
 
 export function useRecommendation(

@@ -56,6 +56,26 @@ export const weatherIcons = {
     99: "⛈️❄️",
 };
 
+export function getWeatherRange(data: WeatherData) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 2);
+    const tomorrowMidnight = new Date(
+        tomorrow.getFullYear(),
+        tomorrow.getMonth(),
+        tomorrow.getDate()
+    );
+    const timestampNow = new Date().getTime();
+    const nowIndex = data.hourly.time.findIndex(
+        (time) => new Date(time).getTime() >= timestampNow
+    );
+    const tomorrowMidnightTimestamp = tomorrowMidnight.getTime();
+    const tomorrowMidnightIndex = data.hourly.time.findIndex(
+        (time) => new Date(time).getTime() >= tomorrowMidnightTimestamp
+    );
+
+    return { nowIndex, tomorrowMidnightIndex };
+}
+
 async function getCoordinates(city: string) {
     const response = await fetch(
         import.meta.env.VITE_BASE_API_URL + `/api/city?city=${city}`
@@ -83,21 +103,7 @@ export function useWeather(city: string | undefined, enabled = true) {
         queryKey: ["weather", city],
         queryFn: async () => await getWeather(await getCoordinates(city!)),
         select({ data }): WeatherData {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 2);
-            const tomorrowMidnight = new Date(
-                tomorrow.getFullYear(),
-                tomorrow.getMonth(),
-                tomorrow.getDate()
-            );
-            const timestampNow = new Date().getTime();
-            const nowIndex = data.hourly.time.findIndex(
-                (time) => new Date(time).getTime() >= timestampNow
-            );
-            const tomorrowMidnightTimestamp = tomorrowMidnight.getTime();
-            const tomorrowMidnightIndex = data.hourly.time.findIndex(
-                (time) => new Date(time).getTime() >= tomorrowMidnightTimestamp
-            );
+            const { nowIndex, tomorrowMidnightIndex } = getWeatherRange(data);
             data.hourly.time = data.hourly.time.slice(
                 nowIndex,
                 tomorrowMidnightIndex
