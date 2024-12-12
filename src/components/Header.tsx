@@ -11,9 +11,11 @@ import { Divider } from "primereact/divider";
 import { Avatar } from "primereact/avatar";
 import { Menu } from "primereact/menu";
 import { MenuItem } from "primereact/menuitem";
+import { useLogout } from "../features/auth/api/useAuth";
 
 export default function Header() {
     const { user } = useAuth();
+    const { mutate: logout } = useLogout();
     const menuRef = useRef<Menu>(null);
     const navigate = useNavigate();
     const [visible, setVisible] = useState(false);
@@ -32,11 +34,17 @@ export default function Header() {
                 navigate("/profile");
             },
         },
+        {
+            separator: true,
+        },
+        {
+            label: "Log out",
+            icon: "pi pi-sign-out",
+            command() {
+                logout();
+            },
+        },
     ];
-
-    function toggleMenu(event: any) {
-        menuRef.current?.toggle(event);
-    }
 
     return (
         <>
@@ -144,7 +152,9 @@ export default function Header() {
                         <Button
                             className="p-0"
                             severity="secondary"
-                            onClick={toggleMenu}
+                            onClick={(event) => {
+                                menuRef.current?.toggle(event);
+                            }}
                             text
                         >
                             <Avatar

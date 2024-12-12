@@ -29,13 +29,11 @@ export default function History() {
     const transformedWeatherData = useMemo(() => {
         if (!historyItem) return null;
 
-        const weatherData = historyItem?.prompt.weatherData;
+        const weatherData = historyItem.prompt.weatherData;
         const { nowIndex, tomorrowMidnightIndex } =
             getWeatherRange(weatherData);
-        const unit = weatherData.hourly_units.temperature_2m.slice(
-            nowIndex,
-            tomorrowMidnightIndex
-        );
+
+        const unit = weatherData.hourly_units.temperature_2m;
         const time = weatherData.hourly.time.slice(
             nowIndex,
             tomorrowMidnightIndex
@@ -44,7 +42,6 @@ export default function History() {
             nowIndex,
             tomorrowMidnightIndex
         );
-        console.log(icons);
         const temperature = weatherData.hourly.temperature_2m
             .slice(nowIndex, tomorrowMidnightIndex)
             .map((temp) => `${temp} ${unit}`);

@@ -1,55 +1,109 @@
 import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useSearch } from "../context/SearchContext";
+import { Dropdown } from "primereact/dropdown";
+import { City, useCities } from "../api/useCities";
+import { useDebounce } from "primereact/hooks";
+import { AutoComplete } from "primereact/autocomplete";
 
 export default function Inputs() {
+    const transformCities = useCallback((cities: City[]) => {
+        return cities.map((city) => `${city.name}, ${city.country}`);
+    }, []);
     const [input, setInput] = useState<{
-        city: string;
         favoriteTemperature: string;
         style: string;
     }>({
-        city: "",
         favoriteTemperature: "",
         style: "",
     });
+    const [city, debouncedCity, setCity] = useDebounce("", 750);
+    const { data: cities } = useCities(debouncedCity, transformCities);
     const { setSearch } = useSearch();
 
     return (
-        <div className="flex flex-col gap-2">
+        <form
+            className="flex flex-col gap-2 w-full max-w-96"
+            onSubmit={(event) => {
+                event.preventDefault();
+            }}
+        >
             <div className="grid grid-rows-3 gap-4">
-                <InputText
-                    type="text"
+                <AutoComplete
+                    inputClassName="w-full"
                     placeholder="City"
-                    onChange={(e) =>
-                        setInput({ ...input, city: e.target.value })
-                    }
+                    value={city}
+                    suggestions={cities}
+                    completeMethod={() => {}}
+                    onChange={(event) => {
+                        setCity(event.value);
+                    }}
+                    forceSelection
                 />
-                <InputText
+                <Dropdown
                     type="text"
                     name="favoriteTemperature"
                     placeholder="Preferred Temperature"
+                    options={[
+                        "Very cold",
+                        "Cold",
+                        "Neutral",
+                        "Hot",
+                        "Very hot",
+                    ]}
+                    value={input.favoriteTemperature}
                     onChange={(e) => {
                         setInput({
                             ...input,
                             favoriteTemperature: e.target.value,
                         });
                     }}
+                    required
                 />
-                <InputText
+                <Dropdown
                     type="text"
                     name="style"
                     placeholder="Preferred style"
+                    options={[
+                        "Sport",
+                        "Streetwear",
+                        "Vintage",
+                        "Renaissance",
+                        "Business formal",
+                        "Goth",
+                        "Punk",
+                        "Summer chic",
+                        "Winter cozy",
+                        "E-girl",
+                        "E-boy",
+                        "Smart casual",
+                    ]}
+                    value={input.style}
                     onChange={(e) => {
                         setInput({ ...input, style: e.target.value });
                     }}
+                    filter
+                    required
                 />
             </div>
             <Button
                 label="Get Weather Recommendation"
                 className="mx-auto"
-                onClick={() => setSearch(input)}
+                onClick={() => {
+                    const cityName = city.split(",")[0];
+
+                    for (const key in input) {
+                        if (!input[key as keyof typeof input]) return;
+                    }
+
+                    if (!cityName) return;
+
+                    setSearch({ ...input, city: cityName });
+                }}
+                disabled={Object.values(input)
+                    .map(Boolean)
+                    .some((i) => !i)}
             />
-        </div>
+        </form>
     );
 }

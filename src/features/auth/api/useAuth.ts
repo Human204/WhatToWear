@@ -30,6 +30,25 @@ async function login(credentials: Omit<Credentials, "email">): Promise<User> {
     return response.json();
 }
 
+async function logout() {
+    const response = await fetch(
+        import.meta.env.VITE_BASE_API_URL + "/logout",
+        {
+            headers: {
+                "Content-Type": "application/json",
+            },
+            mode: "cors",
+            credentials: "include",
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error("Logout failed");
+    }
+
+    return response.json();
+}
+
 async function register(credentials: Credentials): Promise<void> {
     const response = await fetch(
         import.meta.env.VITE_BASE_API_URL + "/register",
@@ -79,6 +98,23 @@ export function useLogin() {
             });
 
             await queryClient.invalidateQueries({ queryKey: ["me"] });
+        },
+    });
+}
+
+export function useLogout() {
+    const queryClient = useQueryClient();
+    const toast = useToast();
+
+    return useMutation({
+        mutationFn: logout,
+        async onSuccess() {
+            toast.current?.show({
+                severity: "success",
+                summary: "Logged out successfully",
+            });
+
+            await queryClient.resetQueries({ queryKey: ["me"] });
         },
     });
 }

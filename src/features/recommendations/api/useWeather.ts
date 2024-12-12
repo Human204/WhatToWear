@@ -73,7 +73,10 @@ export function getWeatherRange(data: WeatherData) {
         (time) => new Date(time).getTime() >= tomorrowMidnightTimestamp
     );
 
-    return { nowIndex, tomorrowMidnightIndex };
+    return {
+        nowIndex: nowIndex === -1 ? 0 : nowIndex,
+        tomorrowMidnightIndex,
+    };
 }
 
 async function getCoordinates(city: string) {
