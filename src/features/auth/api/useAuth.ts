@@ -10,6 +10,8 @@ export type Credentials = {
 export type User = {
     email: string;
     username: string;
+    preferences: Record<string, string>;
+    role: "user" | "admin";
 };
 
 async function login(credentials: Omit<Credentials, "email">): Promise<User> {
@@ -114,7 +116,7 @@ export function useLogout() {
                 summary: "Logged out successfully",
             });
 
-            await queryClient.resetQueries({ queryKey: ["me"] });
+            await queryClient.resetQueries({ queryKey: [] });
         },
     });
 }

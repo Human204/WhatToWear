@@ -8,8 +8,9 @@ import { SearchProvider } from "../features/recommendations/context/SearchContex
 import Protected from "../components/Protected";
 import Profile from "./app/Profile";
 import History from "./app/History";
+import Admin from "./app/Admin";
 
-export default createBrowserRouter([
+const routes = createBrowserRouter([
     {
         path: "/",
         element: (
@@ -47,6 +48,16 @@ export default createBrowserRouter([
                     </Protected>
                 ),
             },
+            {
+                path: "/admin",
+                element: (
+                    <Protected adminOnly>
+                        <Admin />
+                    </Protected>
+                ),
+            },
         ],
     },
 ]);
+
+export default routes;

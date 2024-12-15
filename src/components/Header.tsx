@@ -35,6 +35,14 @@ export default function Header() {
             },
         },
         {
+            label: "Admin panel",
+            icon: "pi pi-objects-column",
+            visible: user?.role === "admin",
+            command() {
+                navigate("/admin");
+            },
+        },
+        {
             separator: true,
         },
         {

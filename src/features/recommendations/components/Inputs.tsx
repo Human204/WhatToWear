@@ -58,7 +58,6 @@ export default function Inputs() {
                             favoriteTemperature: e.target.value,
                         });
                     }}
-                    required
                 />
                 <Dropdown
                     type="text"
@@ -83,7 +82,6 @@ export default function Inputs() {
                         setInput({ ...input, style: e.target.value });
                     }}
                     filter
-                    required
                 />
             </div>
             <Button
@@ -92,17 +90,11 @@ export default function Inputs() {
                 onClick={() => {
                     const cityName = city.split(",")[0];
 
-                    for (const key in input) {
-                        if (!input[key as keyof typeof input]) return;
-                    }
-
                     if (!cityName) return;
 
                     setSearch({ ...input, city: cityName });
                 }}
-                disabled={Object.values(input)
-                    .map(Boolean)
-                    .some((i) => !i)}
+                disabled={!debouncedCity}
             />
         </form>
     );

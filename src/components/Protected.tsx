@@ -3,7 +3,13 @@ import { useAuth } from "../context/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { ProgressSpinner } from "primereact/progressspinner";
 
-export default function Protected({ children }: { children: ReactNode }) {
+export default function Protected({
+    children,
+    adminOnly,
+}: {
+    children: ReactNode;
+    adminOnly?: boolean;
+}) {
     const auth = useAuth();
 
     if (auth.isLoading) {
@@ -14,7 +20,7 @@ export default function Protected({ children }: { children: ReactNode }) {
         );
     }
 
-    if (!auth?.user) {
+    if (!auth?.user || (adminOnly && auth.user.role !== "admin")) {
         return <Navigate to="/" replace />;
     }
 
