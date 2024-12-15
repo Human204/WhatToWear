@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useWeather } from "../api/useWeather";
 import { useSearch } from "../context/SearchContext";
 import { useRecommendation } from "../api/useRecommendation";
@@ -6,8 +6,7 @@ import dayjs from "dayjs";
 import { Skeleton } from "primereact/skeleton";
 import "leaflet/dist/leaflet.css";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
-import { Button } from "primereact/button";
-import { useSaveHistory } from "../api/useHistory";
+// import { useSaveHistory } from "../api/useHistory";
 
 export function ChangeView({
     center,
@@ -23,7 +22,6 @@ export function ChangeView({
 
 export default function Response() {
     const { search } = useSearch();
-    const [saved, setSaved] = useState(false);
     const { data: weatherData } = useWeather(search?.city);
     const transformedWeatherData = useMemo(() => {
         if (!weatherData) return null;
@@ -46,24 +44,17 @@ export default function Response() {
         weatherData,
         search
     );
-    const { mutate: saveHistory } = useSaveHistory();
+    // const { mutate: saveHistory } = useSaveHistory();
 
-    function handleSave() {
-        saveHistory(
-            {
-                prompt: {
-                    weatherData,
-                    userPreferences: search,
-                },
-                response,
-            },
-            {
-                onSuccess() {
-                    setSaved(true);
-                },
-            }
-        );
-    }
+    // function handleSave() {
+    //     saveHistory({
+    //         prompt: {
+    //             weatherData,
+    //             userPreferences: search,
+    //         },
+    //         response,
+    //     });
+    // }
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-[minmax(400px,1fr),2fr] gap-4 p-3 sm:px-11 sm:py-6 overflow-auto">
@@ -136,14 +127,18 @@ export default function Response() {
             ) : (
                 <div className="flex flex-col gap-4">
                     <div className="relative">
-                        <Button
-                            className="absolute top-0 right-0 z-10"
-                            icon={`pi ${saved ? "pi-heart-fill" : "pi-heart"}`}
-                            severity="danger"
-                            onClick={handleSave}
-                            disabled={saved}
-                            text
-                        />
+                        {/* {auth?.user && (
+                            <Button
+                                className="absolute top-0 right-0 z-10"
+                                icon={`pi ${
+                                    saved ? "pi-heart-fill" : "pi-heart"
+                                }`}
+                                severity="danger"
+                                onClick={handleSave}
+                                disabled={saved}
+                                text
+                            />
+                        )} */}
                         <img
                             className="w-full h-auto max-h-96 object-scale-down"
                             src={response?.imageUrl}

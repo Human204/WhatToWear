@@ -2,6 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { WeatherData } from "./useWeather";
 import { Preferences } from "./useRecommendation";
 
+export type History = {
+    id: number;
+    prompt: string;
+    response: string;
+    rating: number | null;
+    created_at: string;
+};
+
 export type ClothingRecommendation = {
     summary: string;
     clothes: {
@@ -38,12 +46,7 @@ async function getHisotry() {
         }
     );
 
-    return (await response.json()) as {
-        id: number;
-        prompt: string;
-        response: string;
-        created_at: string;
-    }[];
+    return (await response.json()) as History[];
 }
 
 export function useSaveHistory() {
@@ -65,7 +68,8 @@ export function useHistory() {
         queryFn: getHisotry,
         staleTime: Infinity,
         select(data) {
-            return data.map((d) => {
+            return data.map((d, idx) => {
+                console.log(idx, d);
                 return {
                     ...d,
                     prompt: JSON.parse(d.prompt) as {

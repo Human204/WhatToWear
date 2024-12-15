@@ -7,17 +7,22 @@ import { ChangeView } from "../../features/recommendations/components/Response";
 import { TileLayer } from "react-leaflet/TileLayer";
 import { Marker } from "react-leaflet/Marker";
 import { Button } from "primereact/button";
-import { useRegenerate } from "../../features/recommendations/api/useRecommendation";
+import {
+    useRateGeneration,
+    useRegenerate,
+} from "../../features/recommendations/api/useRecommendation";
 import { Skeleton } from "primereact/skeleton";
 import { classNames } from "primereact/utils";
 import {
     getWeatherRange,
     weatherIcons,
 } from "../../features/recommendations/api/useWeather";
+import { Rating } from "primereact/rating";
 
 export default function History() {
     const { historyId } = useParams();
     const { data: history, isFetching } = useHistory();
+    const { mutate: rateGeneration } = useRateGeneration();
     const historyItem = history?.find((item) => item.id === +(historyId ?? ""));
     const weatherData = historyItem?.prompt.weatherData;
     const response = historyItem?.response;
@@ -42,13 +47,16 @@ export default function History() {
             nowIndex,
             tomorrowMidnightIndex
         );
+        const shouldTransform = !isNaN(+weatherData.hourly.weather_code[0]);
         const temperature = weatherData.hourly.temperature_2m
             .slice(nowIndex, tomorrowMidnightIndex)
             .map((temp) => `${temp} ${unit}`);
         const joined = temperature.map((temp, idx) => ({
             temperature: temp,
             time: time[idx],
-            icon: weatherIcons[icons[idx] as keyof typeof weatherIcons],
+            icon: shouldTransform
+                ? weatherIcons[icons[idx] as keyof typeof weatherIcons]
+                : icons[idx],
         }));
 
         return joined;
@@ -129,6 +137,20 @@ export default function History() {
             ) : (
                 <div className="flex flex-col gap-4">
                     <div className="relative">
+                        <Rating
+                            className="absolute top-0 left-0 p-3"
+                            cancel={false}
+                            disabled={historyItem?.rating != null}
+                            value={historyItem?.rating ?? 0}
+                            onChange={(event) => {
+                                if (!historyItem || event.value == null) return;
+
+                                rateGeneration({
+                                    id: historyItem.id,
+                                    rating: event.value,
+                                });
+                            }}
+                        />
                         <Button
                             className="absolute top-0 right-0"
                             icon={classNames("pi pi-sync", {
@@ -139,7 +161,7 @@ export default function History() {
                             text
                         />
                         <img
-                            className="w-full h-auto max-h-96 object-scale-down"
+                            className="w-full h-auto max-h-96 mb-5 object-scale-down"
                             src={
                                 response && "imageUrl" in response
                                     ? response.imageUrl

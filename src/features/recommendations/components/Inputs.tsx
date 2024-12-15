@@ -11,12 +11,9 @@ export default function Inputs() {
         return cities.map((city) => `${city.name}, ${city.country}`);
     }, []);
     const [input, setInput] = useState<{
-        favoriteTemperature: string;
-        style: string;
-    }>({
-        favoriteTemperature: "",
-        style: "",
-    });
+        favoriteTemperature?: string;
+        style?: string;
+    }>({});
     const [city, debouncedCity, setCity] = useDebounce("", 750);
     const { data: cities } = useCities(debouncedCity, transformCities);
     const { setSearch } = useSearch();

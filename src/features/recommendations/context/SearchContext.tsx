@@ -2,8 +2,8 @@ import { createContext, ReactNode, useContext, useState } from "react";
 
 type Search = {
     city: string;
-    favoriteTemperature: string;
-    style: string;
+    favoriteTemperature?: string;
+    style?: string;
 };
 
 export type SearchContextType = {
